@@ -43,13 +43,13 @@ To test the MCP server using the MCP Inspector, you need to run the Agent and th
 1. **Start the Agent (Terminal 1):**
    This will start the TUI and the IPC server.
    ```bash
-   python src/adminmcp/agent_runner.py
+   PYTHONPATH=src python -m adminmcp.agent_runner
    ```
 
 2. **Start the Server with Inspector (Terminal 2):**
    This connects the MCP server to the running agent and launches the Inspector web interface.
    ```bash
-   npx @modelcontextprotocol/inspector python src/adminmcp/server_runner.py
+   PYTHONPATH=src npx @modelcontextprotocol/inspector python -m adminmcp.server_runner
    ```
 
 ## Running Tests
