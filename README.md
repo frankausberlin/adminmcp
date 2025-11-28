@@ -36,6 +36,22 @@ To start the server, run the following command in the project's root directory:
 python src/adminmcp/main.py
 ```
 
+## Testing with MCP Inspector
+
+To test the MCP server using the MCP Inspector, you need to run the Agent and the Server separately. This allows you to interact with the TUI in one terminal while the Inspector runs in another.
+
+1. **Start the Agent (Terminal 1):**
+   This will start the TUI and the IPC server.
+   ```bash
+   python src/adminmcp/agent_runner.py
+   ```
+
+2. **Start the Server with Inspector (Terminal 2):**
+   This connects the MCP server to the running agent and launches the Inspector web interface.
+   ```bash
+   npx @modelcontextprotocol/inspector python src/adminmcp/server_runner.py
+   ```
+
 ## Running Tests
 
 The project uses `pytest` for unit and integration tests. To run the tests:
