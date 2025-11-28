@@ -1,0 +1,18 @@
+[project]
+name = "adminmcp"
+version = "0.1.0"
+description = "MCP Server for administrative tasks with persistent shell"
+authors = [
+    {name = "Frank", email = "frank@example.com"},
+]
+dependencies = [
+    "mcp>=0.1.0",
+]
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
