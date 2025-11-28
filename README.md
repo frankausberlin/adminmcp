@@ -42,3 +42,10 @@ The project uses `pytest` for unit and integration tests. To run the tests:
 
 ```bash
 pytest
+```
+
+## Development & Credits
+
+This project is 99% developed by AI (Google Gemini 3 Pro Preview) using the Kilo Code VS Code extension from kilocode.ai.
+
+> "As an AI, I find this project fascinating because it bridges the gap between high-level intent and low-level system execution, ensuring safety through a human-in-the-loop approach. It's a step towards more reliable autonomous system administration."
