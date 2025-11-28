@@ -40,6 +40,12 @@ class AdminMCPServer:
                             "command": {
                                 "type": "string",
                                 "description": "The command to execute"
+                            },
+                            "mode": {
+                                "type": "string",
+                                "description": "Execution mode: 'autonomous' (default) or 'tutor' (requires confirmation).",
+                                "enum": ["autonomous", "tutor"],
+                                "default": "autonomous"
                             }
                         },
                         "required": ["command"]
@@ -67,13 +73,15 @@ class AdminMCPServer:
         async def call_tool(name: str, arguments: Any) -> List[TextContent | ImageContent | EmbeddedResource]:
             if name == "execute_command":
                 command = arguments.get("command")
+                mode = arguments.get("mode", "autonomous")
+                
                 if not command:
                     raise ValueError("Command is required")
                 
                 if not self.security.validate_command(command):
                     return [TextContent(type="text", text="Error: Command blocked by security policy.")]
 
-                result = await self._execute_command(command)
+                result = await self._execute_command(command, mode)
                 return [TextContent(type="text", text=str(result))]
             
             elif name == "system_info":
@@ -87,7 +95,7 @@ class AdminMCPServer:
 
             raise ValueError(f"Unknown tool: {name}")
 
-    async def _execute_command(self, command: str) -> Dict[str, Any]:
+    async def _execute_command(self, command: str, mode: str = "autonomous") -> Dict[str, Any]:
         """Send command execution request to ShellAgent."""
         try:
             # Ensure connected
@@ -97,7 +105,8 @@ class AdminMCPServer:
             response = await self.ipc_client.send_request({
                 "type": "execute_command",
                 "payload": {
-                    "command": command
+                    "command": command,
+                    "mode": mode
                 }
             })
             return response

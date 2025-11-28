@@ -139,3 +139,28 @@ Native Python implementations for system inspection, avoiding shell parsing wher
     *   `list_processes`: Returns JSON list of active processes (PID, name, status).
 *   **Dependencies:**
     *   `psutil` (recommended for robust process/system monitoring).
+
+## 6. Phase 3 Architecture (Interactive Shell & TUI)
+
+### 6.1. TUI Framework (`textual`)
+We will use **Textual** to build the interactive terminal interface for the `ShellAgent`. This allows the agent to be visible to the user, displaying the shell output and providing a mechanism for manual intervention (Tutor Mode).
+
+*   **Class:** `AgentTUI` (extends `textual.app.App`)
+*   **Components:**
+    *   `TerminalWidget`: Renders the VT100 output from the PTY.
+    *   `StatusBar`: Shows current mode (Autonomous, Tutor, Restricted) and connection status.
+    *   `ConfirmationModal`: A popup dialog for Tutor mode approvals.
+
+### 6.2. Tutor Mode Workflow
+In Tutor mode, the Agent acts as a gatekeeper.
+
+1.  **Request:** `AdminMCPServer` sends an `execute_command` request with `mode="tutor"`.
+2.  **Interception:** `ShellAgent` receives the request but does *not* immediately write to the PTY.
+3.  **Prompt:** The `AgentTUI` displays a confirmation modal: "Allow execution of: `<command>`?".
+4.  **User Action:**
+    *   **Approve:** User presses 'y'/'Enter'. Agent writes command to PTY and returns output.
+    *   **Deny:** User presses 'n'/'Esc'. Agent returns "Permission denied by user" error.
+    *   **Edit:** (Optional for later) User edits the command before approving.
+
+### 6.3. Architecture Updates
+*   **`ShellAgent`:** Will now initialize and run the `AgentTUI` application. The IPC server will run as a background task within the Textual event loop or alongside it.

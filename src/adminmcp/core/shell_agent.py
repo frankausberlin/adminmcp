@@ -10,6 +10,7 @@ import tty
 from typing import Any, Dict, List, Optional
 
 from adminmcp.core.ipc import IPCServer
+from adminmcp.core.tui import AgentTUI
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ class ShellAgent:
         self.pid: Optional[int] = None
         self.ipc_server: Optional[IPCServer] = None
         self.running = False
+        self.tui = AgentTUI()
 
     async def start(self) -> None:
         """Start the shell process and IPC server."""
@@ -49,6 +51,9 @@ class ShellAgent:
             
             # Start output reader task
             asyncio.create_task(self._read_shell_output())
+            
+            # Start TUI
+            await self.tui.run_async()
 
     async def stop(self) -> None:
         """Stop the shell and IPC server."""
@@ -67,17 +72,24 @@ class ShellAgent:
             
         if self.master_fd:
             os.close(self.master_fd)
+            
+        # Stop TUI
+        if self.tui.is_running:
+            await self.tui.exit()
 
     async def handle_ipc_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming IPC requests."""
         req_type = request.get("type")
         
         if req_type == "execute_command":
-            command = request.get("payload", {}).get("command")
+            payload = request.get("payload", {})
+            command = payload.get("command")
+            mode = payload.get("mode", "autonomous")
+            
             if not command:
                 return {"status": "error", "error": "No command provided"}
             
-            return await self._execute_command(command)
+            return await self._execute_command(command, mode)
             
         elif req_type == "resize":
             rows = request.get("payload", {}).get("rows", 24)
@@ -88,10 +100,20 @@ class ShellAgent:
         else:
             return {"status": "error", "error": f"Unknown request type: {req_type}"}
 
-    async def _execute_command(self, command: str) -> Dict[str, Any]:
+    async def _execute_command(self, command: str, mode: str) -> Dict[str, Any]:
         """Execute a command in the shell."""
         if not self.master_fd:
             return {"status": "error", "error": "Shell not running"}
+
+        self.tui.update_status(mode, "Processing request")
+
+        if mode == "tutor":
+            self.tui.update_status(mode, "Waiting for confirmation")
+            confirmed = await self.tui.request_confirmation(command)
+            if not confirmed:
+                self.tui.update_status(mode, "Denied")
+                return {"status": "error", "error": "Command execution denied by user"}
+            self.tui.update_status(mode, "Approved")
 
         try:
             # Append newline to execute
@@ -100,7 +122,7 @@ class ShellAgent:
                 
             os.write(self.master_fd, command.encode('utf-8'))
             
-            # In a real implementation, we would need a way to capture output 
+            # In a real implementation, we would need a way to capture output
             # specifically for this command and detect when it finishes.
             # For this sprint, we just acknowledge the write.
             return {"status": "ok", "message": "Command sent to shell"}
@@ -121,8 +143,9 @@ class ShellAgent:
                     if not data:
                         break
                     
-                    # Log output for now (later we might broadcast via IPC)
-                    # logger.debug(f"Shell output: {data.decode('utf-8', errors='replace')}")
+                    # Decode and write to TUI
+                    text = data.decode('utf-8', errors='replace')
+                    self.tui.write_to_terminal(text)
                     
                 except BlockingIOError:
                     continue

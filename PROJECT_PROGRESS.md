@@ -40,6 +40,22 @@ Result Phase 2:
 Goals: Secure command execution and native system monitoring tools.
 """
 
+Phase 3: Interactive Shell & TUI
+* Sprint 3: ✅ Interactive Shell & TUI (Completed 2025-11-28)
+
+- Task 3.1.1: Add `textual` dependency to `pyproject.toml` ✅
+- Task 3.1.2: Create `src/adminmcp/core/tui.py` with basic `AgentTUI` class ✅
+- Task 3.1.3: Implement `TerminalWidget` to render PTY output ✅
+- Task 3.2.1: Integrate `AgentTUI` into `ShellAgent` (replace simple loop with TUI app) ✅
+- Task 3.2.2: Implement `Tutor` mode logic in `ShellAgent` (intercept commands) ✅
+- Task 3.2.3: Create `ConfirmationModal` in TUI for Tutor requests ✅
+- Task 3.3.1: Update `AdminMCPServer` to support `mode` parameter in `execute_command` ✅
+- Task 3.3.2: Verify Tutor mode flow (Client -> Server -> Agent -> TUI Prompt -> User Approve -> Shell) ✅
+
+Result Phase 3:
+Goals: Interactive TUI for the agent and "Human-in-the-loop" Tutor mode.
+"""
+
 Status symbols:
 
 Unresolved problem: ❌
