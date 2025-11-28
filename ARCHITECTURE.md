@@ -116,3 +116,26 @@ We will use **Unix Domain Sockets (UDS)** for low-latency, secure local communic
 ### Sprint 1.4: Integration & Verification
 *   **Task 1.4.1:** Create an end-to-end test: MCP Client -> Server -> IPC -> Agent -> Shell -> Result.
 *   **Task 1.4.2:** Verify "Autonomous" mode for simple commands (e.g., `echo "hello"`).
+
+## 5. Phase 2 Architecture (Basic Tools & Security)
+
+### 5.1. Security Layer (`src/adminmcp/core/security.py`)
+Centralized security validation for command execution.
+
+*   **Class:** `SecurityValidator`
+*   **Responsibilities:**
+    *   Validate shell commands against safety rules.
+    *   Maintain lists of allowed/blocked commands or patterns.
+    *   Enforce operation modes (e.g., "restricted" vs "autonomous").
+*   **Key Methods:**
+    *   `validate_command(command: str) -> bool`: Returns True if command is safe.
+    *   `check_permissions(tool_name: str) -> bool`: Checks if a tool is allowed.
+
+### 5.2. System Tools (`src/adminmcp/tools/system.py`)
+Native Python implementations for system inspection, avoiding shell parsing where possible.
+
+*   **Tools:**
+    *   `system_info`: Returns JSON with OS, Kernel, CPU, Memory stats.
+    *   `list_processes`: Returns JSON list of active processes (PID, name, status).
+*   **Dependencies:**
+    *   `psutil` (recommended for robust process/system monitoring).

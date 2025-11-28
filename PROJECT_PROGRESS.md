@@ -25,6 +25,21 @@ Result Phase 1:
 Goals: Establish stable communication between MCP Server and ShellAgent.
 """
 
+Phase 2: Basic Tools & Security
+* Sprint 2: ✅ Basic Tools & Security (Completed 2025-11-28)
+
+- Task 2.1.1: Add `psutil` dependency to `pyproject.toml` ✅
+- Task 2.1.2: Implement `SecurityValidator` in `src/adminmcp/core/security.py` ✅
+- Task 2.1.3: Implement `system_info` and `list_processes` in `src/adminmcp/tools/system.py` ✅
+- Task 2.2.1: Integrate `SecurityValidator` into `AdminMCPServer` ✅
+- Task 2.2.2: Register new system tools in `AdminMCPServer` ✅
+- Task 2.3.1: Write unit tests for `SecurityValidator` ✅
+- Task 2.3.2: Write unit tests for system tools ✅
+
+Result Phase 2:
+Goals: Secure command execution and native system monitoring tools.
+"""
+
 Status symbols:
 
 Unresolved problem: ❌

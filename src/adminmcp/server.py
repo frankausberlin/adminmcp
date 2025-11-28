@@ -8,6 +8,8 @@ from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
 
 from adminmcp.core.ipc import IPCClient
+from adminmcp.core.security import SecurityValidator
+from adminmcp.tools.system import get_system_info, list_processes
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +20,7 @@ class AdminMCPServer:
     def __init__(self, ipc_path: str):
         self.ipc_path = ipc_path
         self.ipc_client = IPCClient(ipc_path)
+        self.security = SecurityValidator()
         self.app = Server("adminmcp")
         
         self._setup_handlers()
@@ -41,6 +44,22 @@ class AdminMCPServer:
                         },
                         "required": ["command"]
                     }
+                ),
+                Tool(
+                    name="system_info",
+                    description="Get system information (OS, CPU, Memory).",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                    }
+                ),
+                Tool(
+                    name="list_processes",
+                    description="List running processes.",
+                    inputSchema={
+                        "type": "object",
+                        "properties": {},
+                    }
                 )
             ]
 
@@ -51,9 +70,21 @@ class AdminMCPServer:
                 if not command:
                     raise ValueError("Command is required")
                 
+                if not self.security.validate_command(command):
+                    return [TextContent(type="text", text="Error: Command blocked by security policy.")]
+
                 result = await self._execute_command(command)
                 return [TextContent(type="text", text=str(result))]
             
+            elif name == "system_info":
+                info = get_system_info()
+                return [TextContent(type="text", text=str(info))]
+            
+            elif name == "list_processes":
+                procs = list_processes()
+                # Limit output to avoid overwhelming the client
+                return [TextContent(type="text", text=str(procs[:50]))]
+
             raise ValueError(f"Unknown tool: {name}")
 
     async def _execute_command(self, command: str) -> Dict[str, Any]:
