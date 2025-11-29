@@ -1,20 +1,46 @@
 [project]
-name = "adminmcp"
+name = "acp"
 version = "0.1.0"
-description = "MCP Server for administrative tasks with persistent shell"
-authors = [
-    {name = "Frank", email = "frank@example.com"},
+description = "Admin Context Protocol (ACP) CLI and Server"
+readme = "README.md"
+authors = [{ name = "Admin MCP" }]
+requires-python = ">=3.11"
+license = { file = "LICENSE" }
+keywords = ["mcp", "sysadmin", "cli", "fastapi", "automation"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: System Administrators",
+    "Topic :: System :: Systems Administration",
+    "Operating System :: OS Independent",
 ]
 dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "requests>=2.31.0",
+    "pydantic>=2.6.0",
     "mcp>=0.1.0",
-    "psutil>=5.9.0",
-    "textual>=0.41.0",
 ]
-requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.26.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/admin-mcp/acp"
+Documentation = "https://github.com/admin-mcp/acp#readme"
+
+[project.scripts]
+acp = "acp.main:main"
+ai = "acp.main:main"
 
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/acp"]
