@@ -12,6 +12,7 @@ from uvicorn import Config, Server
 
 from acp.client.api import APIClient
 from acp.client.executor import CommandExecutor
+from acp.client.llm import LLMClient, LLMClientError
 from acp.client.state import ACPMode, StateManager
 from acp.common.models import PromptAnalysisRequest, ToolCall
 from acp.config import ACPConfig
@@ -54,6 +55,19 @@ class ACPCLI:
             if head == "mode":
                 self._handle_mode_command(tail)
                 return
+            if head == "ask":
+                if not tail:
+                    parser.error("'acp ask' requires a prompt")
+                prompt_text = " ".join(tail).strip()
+                if not prompt_text:
+                    parser.error("'acp ask' requires a non-empty prompt")
+                self._handle_ask(
+                    prompt_text,
+                    llm_key=args.llm_key,
+                    llm_base_url=args.llm_base_url,
+                    llm_model=args.llm_model,
+                )
+                return
             self._handle_command(command, timeout=args.timeout)
             return
 
@@ -68,6 +82,13 @@ class ACPCLI:
         parser.add_argument("-s", "--set-mode", dest="set_mode", choices=WATCHABLE_MODES, help="Immediately switch active mode")
         parser.add_argument("--log", action="store_true", help="Display command logs (stub)")
         parser.add_argument("-p", "--prompt-text", help="Natural language prompt to analyze")
+        parser.add_argument("--llm-key", dest="llm_key", help="Override the LLM API key (defaults to ACP_LLM_KEY)")
+        parser.add_argument(
+            "--llm-base-url",
+            dest="llm_base_url",
+            help="Override the OpenAI-compatible base URL (defaults to ACP_LLM_BASE_URL or config)",
+        )
+        parser.add_argument("--llm-model", dest="llm_model", help="Override the LLM model name")
         parser.add_argument(
             "command",
             nargs=argparse.REMAINDER,
@@ -157,6 +178,34 @@ class ACPCLI:
             for arg in response.arguments:
                 flag = "(required)" if arg.required else "(optional)"
                 print(f"    - {arg.name} [{arg.type}] {flag}: {arg.description or ''}")
+
+    def _handle_ask(
+        self,
+        prompt_text: str,
+        *,
+        llm_key: str | None,
+        llm_base_url: str | None,
+        llm_model: str | None,
+    ) -> None:
+        try:
+            llm_client = LLMClient(
+                config=self.config,
+                api=self.api,
+                api_key=llm_key,
+                base_url=llm_base_url,
+                model=llm_model,
+            )
+            tool_listing = self.api.list_tools()
+            if tool_listing is None:
+                print("Warning: Unable to fetch tool inventory; proceeding without tools.", file=sys.stderr)
+            answer = llm_client.process_request(prompt_text, tools=tool_listing)
+        except LLMClientError as exc:
+            print(f"LLM request failed: {exc}", file=sys.stderr)
+            return
+        except Exception as exc:  # pragma: no cover - SDK/runtime errors
+            print(f"Unexpected LLM failure: {exc}", file=sys.stderr)
+            return
+        print(answer)
 
     def _handle_log_mode(self, args: argparse.Namespace) -> None:
         print("Log viewing is not yet implemented in this scaffold.")

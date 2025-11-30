@@ -6,15 +6,27 @@ ACP ("Admin-MCP") ships both a FastAPI server and a safety-aware CLI so platform
 
 ## Table of Contents
 
-1. [Overview](#overview)
-2. [Key Features](#key-features)
-3. [Installation](#installation)
-4. [Quick Start](#quick-start)
-5. [Usage](#usage)
-6. [Configuration](#configuration)
-7. [Development](#development)
-8. [Contributing](#contributing)
-9. [License](#license)
+- [ACP (Admin-MCP)](#acp-admin-mcp)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Key Features](#key-features)
+  - [Installation](#installation)
+    - [PyPI (coming soon)](#pypi-coming-soon)
+    - [From source (recommended for alpha)](#from-source-recommended-for-alpha)
+  - [Quick Start](#quick-start)
+  - [Usage](#usage)
+    - [Running the server (`acp serve`)](#running-the-server-acp-serve)
+    - [Executing commands (`acp run ...`)](#executing-commands-acp-run-)
+    - [Managing modes](#managing-modes)
+    - [Prompt analysis](#prompt-analysis)
+    - [Tooling and logs](#tooling-and-logs)
+  - [Intelligent Mode (LLM Integration)](#intelligent-mode-llm-integration)
+    - [Configuring the LLM client](#configuring-the-llm-client)
+    - [Asking ACP for help](#asking-acp-for-help)
+  - [Configuration](#configuration)
+  - [Development](#development)
+  - [Contributing](#contributing)
+  - [License](#license)
 
 ## Overview
 
@@ -130,6 +142,41 @@ The CLI prints the template ID, title, description, and argument schema so you c
 - Use `acp run ...` in `dialog` mode to trigger synchronous tool invocations.
 - All structured logs are persisted locally under `$TMPDIR/bash_session_logs/*_shellexecute.json`.
 - The `--log` flag is reserved for a future tailing experience; today it prints a placeholder message.
+
+## Intelligent Mode (LLM Integration)
+
+`acp ask` unlocks an operator-facing “intelligent mode” that streams your natural-language request to any OpenAI-compatible provider, stitches in ACP tool metadata, and returns an executable plan. When the FastAPI server is running, the CLI also fetches the current tool inventory so the LLM can decide when to call `shell/execute` automatically.
+
+### Configuring the LLM client
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `ACP_LLM_KEY` | ✅ | API key for OpenAI, OpenRouter, or any OpenAI-compatible gateway. Also overridable per command via `--llm-key`. |
+| `ACP_LLM_BASE_URL` | ❌ | Base URL for the completion/chat endpoint. Defaults to `https://api.openai.com/v1`; set `https://openrouter.ai/api/v1` (or another proxy) for OpenRouter compatibility. Also overridable with `--llm-base-url`. |
+| `ACP_LLM_MODEL` | ❌ | Model identifier (defaults to `gpt-4o-mini`). Use provider-specific names such as `meta-llama/llama-3.1-70b-instruct` when working with OpenRouter. Also overridable with `--llm-model`. |
+
+Example OpenRouter configuration:
+
+```bash
+export ACP_LLM_KEY="sk-or-v1..."
+export ACP_LLM_BASE_URL="https://openrouter.ai/api/v1"
+export ACP_LLM_MODEL="meta-llama/llama-3.1-70b-instruct"
+acp ask "List safe recovery steps for a degraded PostgreSQL replica"
+```
+
+All overrides are optional; as long as `ACP_LLM_KEY` is present (or `--llm-key` is provided) the CLI falls back to the default OpenAI endpoint and `gpt-4o-mini` model.
+
+### Asking ACP for help
+
+Use `acp ask "..."` anywhere you would normally type a shell command. The CLI shares your current mode, pulls prompt metadata, and streams the response back to stdout:
+
+```bash
+acp ask "Summarize the failed systemd units on this host"
+acp --llm-model gpt-4o-mini ask "Plan a safe nginx reload with validation"
+acp --llm-base-url https://openrouter.ai/api/v1 --llm-model meta-llama/llama-3.1-70b-instruct ask "Generate disk cleanup steps for /var"
+```
+
+If the MCP server is unreachable, `acp ask` still completes using the LLM provider alone; tool calls are simply skipped until connectivity is restored.
 
 ## Configuration
 

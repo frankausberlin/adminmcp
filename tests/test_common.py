@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from acp.common.models import CommandRequest, LogEntry, LogMetadata, ToolCall
 from acp.common.utils import ensure_directory, resolve_timestamp
+from acp.config import ACPConfig
 
 
 def test_resolve_timestamp_returns_utc_isoformat() -> None:
@@ -54,3 +55,16 @@ def test_log_entry_optional_streams_are_none_when_empty() -> None:
 
     assert payload["stdout"] is None
     assert payload["stderr"] is None
+
+
+def test_config_reads_llm_environment(monkeypatch) -> None:
+    monkeypatch.setenv("ACP_LLM_KEY", "env-key")
+    monkeypatch.setenv("ACP_LLM_BASE_URL", "https://llm.example")
+    monkeypatch.setenv("ACP_LLM_MODEL", "gpt-special")
+
+    config = ACPConfig(default_llm_model="unused", default_llm_base_url="https://default")
+    settings = config.llm_settings
+
+    assert settings.api_key == "env-key"
+    assert settings.base_url == "https://llm.example"
+    assert settings.model == "gpt-special"

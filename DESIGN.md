@@ -73,9 +73,26 @@ The project will require the following key dependencies, defined in `pyproject.t
     *   Methods: `send_log(entry)`, `analyze_prompt(text)`, `call_tool(tool_call)`.
     *   Responsibility: Handles HTTP `POST` requests to `localhost:8765`.
 
+*   **`LLMClient`**:
+    *   Methods: `process_request(user_query)`.
+    *   Responsibility: Connects to OpenAI-compatible APIs. Fetches available tools from `APIClient`, sends user query + tools to LLM, handles tool calls loop, and returns final answer.
+
 *   **`CLI`**:
     *   Methods: `main()`, `parse_args()`, `handle_mode_switch()`, `handle_execution()`.
     *   Responsibility: Entry point. Decides whether to run a command locally, send a prompt to server, or switch modes.
+
+### 3.4. Client-Side LLM Workflow (`acp ask`)
+
+1.  **Initialization**: `LLMClient` is initialized with API key/base URL.
+2.  **Tool Discovery**: Client fetches available tools from Server via `APIClient.list_tools()`.
+3.  **Loop**:
+    *   Client sends conversation history (User Query + System Prompt + Tool Definitions) to LLM.
+    *   **Decision**:
+        *   If LLM replies with text: Display to user and exit.
+        *   If LLM requests tool call:
+            *   Client executes tool via `APIClient.call_tool()`.
+            *   Result is added to conversation history.
+            *   Repeat Loop.
 
 ### 3.3. Server (`src/acp/server/`)
 

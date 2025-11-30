@@ -151,3 +151,54 @@ def test_cli_serve_subcommand_invokes_server(monkeypatch) -> None:
     cli.run(["serve"])
 
     assert called["serve"] is True
+
+
+def test_cli_ask_subcommand_routes_to_handle_ask(monkeypatch) -> None:
+    cli = ACPCLI(ACPConfig())
+    recorded: dict[str, object] = {}
+
+    def _record(prompt_text: str, *, llm_key, llm_base_url, llm_model):
+        recorded["prompt"] = prompt_text
+        recorded["key"] = llm_key
+        recorded["base_url"] = llm_base_url
+        recorded["model"] = llm_model
+
+    cli._handle_ask = _record  # type: ignore[assignment]
+
+    cli.run(["ask", "summarize", "logs"])
+
+    assert recorded["prompt"] == "summarize logs"
+    assert recorded["key"] is None
+    assert recorded["base_url"] is None
+    assert recorded["model"] is None
+
+
+def test_cli_ask_passes_llm_overrides(monkeypatch) -> None:
+    cli = ACPCLI(ACPConfig())
+    recorded: dict[str, object] = {}
+
+    def _record(prompt_text: str, *, llm_key, llm_base_url, llm_model):
+        recorded["prompt"] = prompt_text
+        recorded["key"] = llm_key
+        recorded["base_url"] = llm_base_url
+        recorded["model"] = llm_model
+
+    cli._handle_ask = _record  # type: ignore[assignment]
+
+    cli.run(
+        [
+            "--llm-key",
+            "override-key",
+            "--llm-base-url",
+            "https://llm.local",
+            "--llm-model",
+            "gpt-custom",
+            "ask",
+            "status",
+        ]
+    )
+
+    assert recorded["prompt"] == "status"
+    assert recorded["key"] == "override-key"
+    assert recorded["base_url"] == "https://llm.local"
+    assert recorded["model"] == "gpt-custom"
