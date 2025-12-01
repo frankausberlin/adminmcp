@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "admin-mcp"
+version = "0.1.0"
+authors = [{ name="Frank Bloecher", email="frankbloecher@gmail.com" }]
+description = "A MCP based agent environment for system administration."
+readme = "README.md"
+requires-python = ">=3.11"
+keywords = ["mcp-server", "mcp-client", "mcp", "administration", "automation", "agent", "cli-tool"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "mcp"
+]
+
+[project.scripts]
+acp = "adminmcp.cli:main" 
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+python_files = "test_*.py"
+addopts = "--strict-markers"

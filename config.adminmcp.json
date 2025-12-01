@@ -1,0 +1,14 @@
+{
+    "application": {
+        "config_folder": "~/.config/adminmcp",
+        "log_folder": "~/.local/share/adminmcp/logs",
+        "data_folder": "~/.local/share/adminmcp/data",
+        "logging_level": "info"
+    },
+    "server": {
+        "port": 8000
+    },
+    "client": {
+
+    }
+}
